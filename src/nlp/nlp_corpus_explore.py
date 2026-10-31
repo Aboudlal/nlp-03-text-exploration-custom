@@ -8,6 +8,7 @@ Purpose
   Perform exploratory analysis of a small, controlled text corpus.
   Demonstrate how structure emerges from token distributions,
   category comparisons, and co-occurrence patterns.
+  Phase 4: compare context window sizes of 2 and 3.
 
 Analytical Questions
 
@@ -29,7 +30,7 @@ Run from root project folder with:
 # Section 1. Setup and Imports
 # ============================================================
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 import logging
 from pathlib import Path
 
@@ -202,37 +203,51 @@ for category in token_df["category"].unique().to_list():
 # Section 7. Analyze Co-occurrence (Context Windows)
 # ============================================================
 
-# Co-occurrence examines which tokens appear near each other.
+# PHASE 4 TECHNICAL MODIFICATION (Aboudlal, 2026-10)
+# Compare the example's context window (2) with a larger window (3).
+# A window of 3 examines up to 3 words BEFORE and AFTER each target.
+# We compare total nearby tokens, distinct context words, and the new
+# words captured when the window becomes larger.
+BASELINE_WINDOW_SIZE: int = 2
+WINDOW_SIZE: int = 3
+TARGET_TOKENS: list[str] = ["dog", "cat", "car", "truck"]
 
-# Define how many tokens on each side of a target token we include as context.
-# A window size of 2 means:
-#   - up to 2 tokens before the target token
-#   - up to 2 tokens after the target token
-# The target token itself is not included in its context list.
-WINDOW_SIZE: int = 2
 
-# Define a new empty dictionary to store the co-occurrence information.
-# The keys will be target tokens,
-# and the values will be lists of context tokens that appear near the target token.
-co_occurrence_dict: dict[str, list[str]] = defaultdict(list)
+def collect_co_occurrences(window_size: int) -> dict[str, list[str]]:
+    """Collect nearby words without crossing document boundaries."""
+    contexts: dict[str, list[str]] = defaultdict(list)
+    for doc in corpus:
+        tokens = tokenize(doc["text"])
+        for i, token in enumerate(tokens):
+            start = max(0, i - window_size)
+            end = min(len(tokens), i + window_size + 1)
+            for j in range(start, end):
+                if j != i:  # Exclude only the target position itself.
+                    contexts[token].append(tokens[j])
+    return contexts
 
-# Loop through each document in the corpus, tokenize the text,
-# and for each token, determine its context tokens based on the defined window size.
-for doc in corpus:
-    tokens = tokenize(doc["text"])
-    for i, token in enumerate(tokens):
-        start = max(0, i - WINDOW_SIZE)
-        end = min(len(tokens), i + WINDOW_SIZE + 1)
-        context = tokens[start:end]
-        for ctx in context:
-            if ctx != token:
-                co_occurrence_dict[token].append(ctx)
 
-# Show results
-for target in ["dog", "cat", "car", "truck"]:
-    print(f"\nContext for '{target}':")
-    print(co_occurrence_dict[target][:10])
+baseline_contexts = collect_co_occurrences(BASELINE_WINDOW_SIZE)
+co_occurrence_dict = collect_co_occurrences(WINDOW_SIZE)
 
+print("\nPHASE 4: CONTEXT WINDOW COMPARISON (2 vs. 3)")
+for target in TARGET_TOKENS:
+    old_context = baseline_contexts[target]
+    new_context = co_occurrence_dict[target]
+    new_words = sorted(set(new_context) - set(old_context))
+    top_words = Counter(new_context).most_common(5)
+
+    print(f"\nTarget: {target}")
+    print(
+        f"  Window 2: {len(old_context)} nearby tokens, "
+        f"{len(set(old_context))} distinct words"
+    )
+    print(
+        f"  Window 3: {len(new_context)} nearby tokens, "
+        f"{len(set(new_context))} distinct words"
+    )
+    print(f"  New context words with window 3: {new_words}")
+    print(f"  Most common context words (window 3): {top_words}")
 
 # ============================================================
 # Section 8. Create Bigrams (Local Word Pairs) and Compute Frequencies
@@ -311,15 +326,22 @@ plt.show()
 # ============================================================
 
 print("\nCASE GENERAL OBSERVATIONS:")
-
 print("- Tokens cluster by category (dog, cat, car, truck).")
 print("- Words that appear in similar contexts behave similarly.")
 print("- Co-occurrence reveals contextual relationships between words.")
 print("- Bigrams capture local structure beyond single tokens.")
 print("- Patterns emerge before any machine learning is applied.")
 
-print("\nYOURNAME SPECIFIC OBSERVATIONS:")
-print("TODO")
+print("\nABOUDLAL SPECIFIC OBSERVATIONS (PHASE 4):")
+for target in TARGET_TOKENS:
+    previous_words = set(baseline_contexts[target])
+    wider_words = set(co_occurrence_dict[target])
+    print(
+        f"- {target}: increasing the window from 2 to 3 "
+        f"captured {len(wider_words - previous_words)} additional distinct words."
+    )
+print("- A larger window gives more context, but some words may be less relevant.")
+print("- Co-occurrence alone does not prove that two words have the same meaning.")
 
 
 # ============================================================
