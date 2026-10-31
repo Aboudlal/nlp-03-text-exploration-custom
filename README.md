@@ -1,4 +1,4 @@
-# nlp-03-text-exploration
+# nlp-03-text-exploration-custom
 
 [![Python 3.14](https://img.shields.io/badge/python-3.14%2B-blue?logo=python)](pyproject.toml)
 [![CI](https://github.com/denisecase/nlp-03-text-exploration/actions/workflows/ci-python-zensical.yml/badge.svg)](https://github.com/denisecase/nlp-03-text-exploration/actions/workflows/ci-python-zensical.yml)
@@ -13,9 +13,13 @@
 
 ## Project Overview
 
-Author: Denise Case
+Author: Aboudlal
 
 Date: 2026 October
+
+This is my customized version of the NLP text exploration project.
+The project uses Python to analyze text data, identify common
+words, compare categories, and explore relationships between words.
 
 Third project in the Web Mining and Applied NLP course.
 
